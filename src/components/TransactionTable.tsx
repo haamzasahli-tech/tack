@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Transaction } from '../types';
 import { CATS, PM_CONFIGS } from '../data';
-import { formatCurrency, exportToCSV } from '../utils';
+import { formatCurrency, exportToCSV, getCategoryDetails } from '../utils';
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -56,7 +56,7 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
         t =>
           (t.desc || '').toLowerCase().includes(q) ||
           (t.notes || '').toLowerCase().includes(q) ||
-          (CATS[t.cat]?.label || t.cat || '').toLowerCase().includes(q)
+          (getCategoryDetails(t.cat).label || '').toLowerCase().includes(q)
       );
     }
 
@@ -205,10 +205,10 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
           >
             <option value="">All Categories</option>
             {uniqueCats.map((catKey) => {
-              const cat = CATS[catKey];
+              const cat = getCategoryDetails(catKey);
               return (
                 <option key={catKey} value={catKey}>
-                  {cat?.icon} {cat?.label}
+                  {cat.icon} {cat.label}
                 </option>
               );
             })}
@@ -326,7 +326,7 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
               </tr>
             ) : (
               paginatedTransactions.map((t, idx) => {
-                const cat = CATS[t.cat] || CATS.other;
+                const cat = getCategoryDetails(t.cat);
                 const pmCfg = PM_CONFIGS[t.pm] || { icon: '💰', color: '#8895aa' };
                 const formattedDate = new Date(t.date).toLocaleDateString('en-US', {
                   day: 'numeric',

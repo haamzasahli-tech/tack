@@ -1,6 +1,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { CATS, INCOME_CATS, TRANSFER_CATS } from '../data';
 import { Transaction } from '../types';
+import { getCategoryDetails } from '../utils';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -195,7 +196,7 @@ export default function TransactionModal({
                 className="w-full bg-[#1a2130] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-xs text-[#f0f4ff] outline-none focus:border-[#4f8ef7] transition-all"
               >
                 {getFilteredCategories().map((catKey) => {
-                  const cat = CATS[catKey];
+                  const cat = getCategoryDetails(catKey);
                   return (
                     <option key={catKey} value={catKey}>
                       {cat.icon} {cat.label}

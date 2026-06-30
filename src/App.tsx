@@ -20,7 +20,7 @@ import {
 
 import { Transaction, AccountBalances, PeriodType } from './types';
 import { CATS, BUDGETS, getMockTransactions } from './data';
-import { normalizeTransaction, formatCurrency, exportToCSV } from './utils';
+import { normalizeTransaction, formatCurrency, exportToCSV, getCategoryDetails } from './utils';
 
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
@@ -341,7 +341,7 @@ export default function App() {
     (Object.entries(catTotals) as [string, number][]).forEach(([catKey, val]) => {
       const budgetMax = BUDGETS[catKey];
       if (budgetMax && budgetMax > 0 && val > budgetMax) {
-        const cat = CATS[catKey] || CATS.other;
+        const cat = getCategoryDetails(catKey);
         alerts.push({
           id: `alert-budget-${catKey}`,
           type: 'danger',
@@ -398,7 +398,7 @@ export default function App() {
       if (previousSum > 50) { // filter noise
         const pctIncrease = Math.round(((currentSum - previousSum) / previousSum) * 100);
         if (pctIncrease >= 30) {
-          const cat = CATS[catKey] || CATS.other;
+          const cat = getCategoryDetails(catKey);
           alerts.push({
             id: `alert-trend-${catKey}`,
             type: 'warn',
@@ -632,7 +632,7 @@ export default function App() {
               <div className="text-[9px] font-bold text-[#8895aa] uppercase tracking-wider">Top Category</div>
               <div className="font-heading text-sm font-bold text-[#f0f4ff] leading-none mt-2 truncate">
                 {kpiData.topCategoryAmount > 0 
-                  ? `${CATS[kpiData.topCategoryKey]?.icon || '📦'} ${CATS[kpiData.topCategoryKey]?.label || 'Other'}`
+                  ? `${getCategoryDetails(kpiData.topCategoryKey).icon} ${getCategoryDetails(kpiData.topCategoryKey).label}`
                   : '—'
                 }
               </div>
@@ -671,7 +671,7 @@ export default function App() {
                   <div className="text-center text-xs text-[#4a5568] py-12">No expenses registered</div>
                 ) : (
                   top10ExpensesList.map((t, i) => {
-                    const cat = CATS[t.cat] || CATS.other;
+                    const cat = getCategoryDetails(t.cat);
                     const maxAmt = top10ExpensesList[0]?.amount || 1;
                     const pctWidth = Math.min(100, Math.round((t.amount / maxAmt) * 100));
                     return (
@@ -722,7 +722,7 @@ export default function App() {
                     <div className="text-center text-xs text-[#4a5568] py-16">No expense categories to evaluate</div>
                   ) : (
                     categoryBreakdownList.map(([catKey, sum]) => {
-                      const cat = CATS[catKey] || CATS.other;
+                      const cat = getCategoryDetails(catKey);
                       const pct = kpiData.totalExpenses > 0 ? Math.round((sum / kpiData.totalExpenses) * 100) : 0;
                       const txCount = filteredTransactions.filter((t) => t.cat === catKey && t.type === 'expense').length;
                       return (

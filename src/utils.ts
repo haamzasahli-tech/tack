@@ -1,5 +1,92 @@
-import { Transaction, TransactionType } from './types';
+import { Transaction, TransactionType, CategoryInfo } from './types';
 import { CATS, KW, INCOME_CATS, TRANSFER_CATS } from './data';
+
+// Helper to resolve category details (icon, label, color) for any custom or predefined category
+export function getCategoryDetails(catKey: string): CategoryInfo {
+  const norm = (catKey || '').toString().trim();
+  if (!norm) {
+    return {
+      label: 'Other',
+      icon: '📦',
+      color: '#8895aa',
+    };
+  }
+
+  const lower = norm.toLowerCase();
+  if (CATS[lower]) {
+    return CATS[lower];
+  }
+
+  // If we can't find the exact key in CATS, let's see if we can match the label case-insensitively
+  for (const value of Object.values(CATS)) {
+    if (value.label.toLowerCase() === lower) {
+      return value;
+    }
+  }
+
+  // Fallback icon and color selection based on common keywords
+  let icon = '📦';
+  let color = '#8895aa';
+
+  if (lower.includes('food') || lower.includes('eat') || lower.includes('resto') || lower.includes('nourriture') || lower.includes('dine') || lower.includes('repas')) {
+    icon = '🍔'; color = '#f97316';
+  } else if (lower.includes('coffee') || lower.includes('cafe') || lower.includes('espresso') || lower.includes('latte') || lower.includes('cappuccino')) {
+    icon = '☕'; color = '#a78bfa';
+  } else if (lower.includes('grocer') || lower.includes('groceries') || lower.includes('superm') || lower.includes('market') || lower.includes('achat') || lower.includes('epicerie')) {
+    icon = '🛒'; color = '#22c55e';
+  } else if (lower.includes('transp') || lower.includes('taxi') || lower.includes('uber') || lower.includes('bus') || lower.includes('bolt') || lower.includes('metro') || lower.includes('train')) {
+    icon = '🚗'; color = '#3b82f6';
+  } else if (lower.includes('car') || lower.includes('voiture') || lower.includes('fuel') || lower.includes('essence') || lower.includes('parking') || lower.includes('mecanic')) {
+    icon = '🚙'; color = '#4f8ef7';
+  } else if (lower.includes('health') || lower.includes('doctor') || lower.includes('med') || lower.includes('pharm') || lower.includes('dentist') || lower.includes('sante') || lower.includes('clinique')) {
+    icon = '🏥'; color = '#2dd4bf';
+  } else if (lower.includes('bill') || lower.includes('facture') || lower.includes('electr') || lower.includes('water') || lower.includes('internet') || lower.includes('telecom') || lower.includes('steg') || lower.includes('sonede')) {
+    icon = '💡'; color = '#fbbf24';
+  } else if (lower.includes('rent') || lower.includes('loyer') || lower.includes('appartment') || lower.includes('home') || lower.includes('maison')) {
+    icon = '🏠'; color = '#f472b6';
+  } else if (lower.includes('fun') || lower.includes('cin') || lower.includes('show') || lower.includes('netflix') || lower.includes('spotify') || lower.includes('entertain') || lower.includes('loisir') || lower.includes('jeux')) {
+    icon = '🎬'; color = '#c084fc';
+  } else if (lower.includes('shop') || lower.includes('clothe') || lower.includes('zara') || lower.includes('mall') || lower.includes('boutique') || lower.includes('magasin')) {
+    icon = '🛍'; color = '#fb7185';
+  } else if (lower.includes('educ') || lower.includes('school') || lower.includes('book') || lower.includes('course') || lower.includes('learn') || lower.includes('etude') || lower.includes('cours') || lower.includes('livre')) {
+    icon = '📚'; color = '#60a5fa';
+  } else if (lower.includes('travel') || lower.includes('voyage') || lower.includes('flight') || lower.includes('hotel') || lower.includes('vacation') || lower.includes('vol') || lower.includes('vols')) {
+    icon = '✈️'; color = '#34d399';
+  } else if (lower.includes('gift') || lower.includes('cadeau') || lower.includes('present')) {
+    icon = '🎁'; color = '#f87171';
+  } else if (lower.includes('salary') || lower.includes('salaire') || lower.includes('paie') || lower.includes('pay') || lower.includes('virement')) {
+    icon = '💰'; color = '#4ade80';
+  } else if (lower.includes('freelance') || lower.includes('client') || lower.includes('contract') || lower.includes('travail')) {
+    icon = '💼'; color = '#a3e635';
+  } else if (lower.includes('invest') || lower.includes('crypto') || lower.includes('stock') || lower.includes('saving') || lower.includes('bourse') || lower.includes('epargne')) {
+    icon = '📈'; color = '#38bdf8';
+  } else if (lower.includes('bank') || lower.includes('banque') || lower.includes('transfert') || lower.includes('virement_bancaire')) {
+    icon = '🏦'; color = '#818cf8';
+  } else if (lower.includes('fee') || lower.includes('frais') || lower.includes('charge') || lower.includes('commission')) {
+    icon = '💳'; color = '#fb923c';
+  } else if (lower.includes('withdraw') || lower.includes('retrait') || lower.includes('cash_out') || lower.includes('atm')) {
+    icon = '💵'; color = '#94a3b8';
+  } else if (lower.includes('family') || lower.includes('famille') || lower.includes('enfant') || lower.includes('kid')) {
+    icon = '❤️'; color = '#f43f5e';
+  } else if (lower.includes('pet') || lower.includes('dog') || lower.includes('cat') || lower.includes('animal') || lower.includes('chien') || lower.includes('chat')) {
+    icon = '🐶'; color = '#d97706';
+  } else if (lower.includes('sub') || lower.includes('abonnement')) {
+    icon = '📱'; color = '#7c3aed';
+  } else if (lower.includes('online') || lower.includes('amazon') || lower.includes('delivery') || lower.includes('livraison') || lower.includes('jumia') || lower.includes('aliexpress')) {
+    icon = '📦'; color = '#0ea5e9';
+  } else if (lower.includes('tax') || lower.includes('impot') || lower.includes('taxes')) {
+    icon = '📋'; color = '#dc2626';
+  } else if (lower.includes('maint') || lower.includes('repar') || lower.includes('work') || lower.includes('bricolage') || lower.includes('plombier') || lower.includes('electricien')) {
+    icon = '🔧'; color = '#78716c';
+  }
+
+  // Otherwise return the custom category exactly as received with a generic icon and stylish color
+  return {
+    label: norm, // Keep exactly as exists in Google Sheets!
+    icon,
+    color,
+  };
+}
 
 // Helper to format currency values to readable Tunisian Dinars (TND) style
 export function formatCurrency(amount: number): string {
@@ -100,7 +187,7 @@ export function normalizeTransaction(raw: any, fallbackId?: string, enableSmartC
   return {
     id: src.id || fallbackId || `tx-${Math.random().toString(36).substr(2, 9)}`,
     amount,
-    desc: desc || CATS[cat]?.label || cat || 'Unlabeled Transaction',
+    desc: desc || getCategoryDetails(cat).label || 'Unlabeled Transaction',
     notes,
     pm,
     account,
@@ -121,7 +208,7 @@ export function exportToCSV(transactions: Transaction[], filename: string = 'flo
   transactions.forEach(t => {
     const escapedDesc = `"${(t.desc || '').replace(/"/g, '""')}"`;
     const escapedNotes = `"${(t.notes || '').replace(/"/g, '""')}"`;
-    const categoryLabel = CATS[t.cat]?.label || t.cat;
+    const categoryLabel = getCategoryDetails(t.cat).label;
     
     csvLines.push([
       t.date,
