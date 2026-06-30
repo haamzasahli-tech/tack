@@ -34,13 +34,10 @@ const WEBHOOK_URL = 'https://n8n-x5rtnol9als1ymvhfxmgdz77.46.202.153.236.sslip.i
 
 export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [balances, setBalances] = useState<AccountBalances>({ cash: 450, bank: 9800, card: 0 });
+  const [balances, setBalances] = useState<AccountBalances>({ cash: 0, bank: 0, card: 0 });
   
   const [period, setPeriod] = useState<PeriodType>('this_month');
   const [activeSection, setActiveSection] = useState('overview');
-  
-  const [syncState, setSyncState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
-  const [syncInfo, setSyncInfo] = useState<string | number>('');
   
   // Modals visibility toggles
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
@@ -49,41 +46,16 @@ export default function App() {
   // Category configuration toggle
   const [catSortHighest, setCatSortHighest] = useState(true);
 
-  // 1. INITIAL MOUNT LOAD: Restore state from local storage or set defaults
-  useEffect(() => {
-    // Restore starter base balances
-    const savedCash = localStorage.getItem('floww_bal_cash');
-    const savedBank = localStorage.getItem('floww_bal_bank') || localStorage.getItem('floww_floww_bal_bank');
-    const savedCard = localStorage.getItem('floww_bal_card');
-    
-    if (savedCash || savedBank || savedCard) {
-      setBalances({
-        cash: parseFloat(savedCash || '450'),
-        bank: parseFloat(savedBank || '9800'),
-        card: parseFloat(savedCard || '0'),
-      });
-    }
+  // Settings for Smart Categorization
+  const [smartCategorization, setSmartCategorization] = useState<boolean>(() => {
+    return localStorage.getItem('floww_smart_cat') === 'true';
+  });
 
-    // Restore transactions
-    const savedTx = localStorage.getItem('floww_transactions');
-    if (savedTx) {
-      try {
-        setTransactions(JSON.parse(savedTx));
-      } catch (e) {
-        setTransactions(getMockTransactions());
-      }
-    } else {
-      // Set pristine mock data immediately for preview
-      const initialMock = getMockTransactions();
-      setTransactions(initialMock);
-      localStorage.setItem('floww_transactions', JSON.stringify(initialMock));
-    }
+  // Webhook sync states
+  const [syncState, setSyncState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [syncInfo, setSyncInfo] = useState<string | number>('');
 
-    // Auto-sync on startup
-    handleSync();
-  }, []);
-
-  // 2. SYNCHRONIZE DATA: Fetch and merge from n8n sheets webhook
+  // 1. SYNCHRONIZE DATA: Fetch and overwrite from n8n sheets webhook
   const handleSync = async () => {
     setSyncState('loading');
     const url = `${WEBHOOK_URL}?t=${Date.now()}`;
@@ -91,7 +63,6 @@ export default function App() {
     let errorMsg = '';
 
     try {
-      // Attempt 1: Standard GET fetch request
       const response = await fetch(url, {
         method: 'GET',
         mode: 'cors',
@@ -106,7 +77,6 @@ export default function App() {
       errorMsg = e.message;
     }
 
-    // Attempt 2: POST fallback request if GET is CORS-blocked or empty
     if (!fetchedData) {
       try {
         const response = await fetch(url, {
@@ -125,7 +95,6 @@ export default function App() {
       }
     }
 
-    // Process fetched transaction rows
     if (fetchedData) {
       let rawRows: any[] = [];
       if (Array.isArray(fetchedData)) {
@@ -140,45 +109,64 @@ export default function App() {
         rawRows = [fetchedData];
       }
 
-      // Filter and normalize parsed rows
+      // Read current smart categorization state
+      const isSmartCatEnabled = localStorage.getItem('floww_smart_cat') === 'true';
+
       const normalized = rawRows
-        .map((row, idx) => normalizeTransaction(row, `synced-${idx}`))
+        .map((row, idx) => normalizeTransaction(row, `synced-${idx}`, isSmartCatEnabled))
         .filter((row) => row.amount > 0);
 
-      if (normalized.length > 0) {
-        // Merge with local items (checking duplicates via matching dates, values and descriptions)
-        setTransactions((prev) => {
-          const merged = [...prev];
-          normalized.forEach((newTx) => {
-            const isDup = merged.some(
-              (tx) => 
-                tx.date === newTx.date && 
-                Math.abs(tx.amount - newTx.amount) < 0.01 && 
-                tx.desc.toLowerCase() === newTx.desc.toLowerCase()
-            );
-            if (!isDup) {
-              merged.push(newTx);
-            }
-          });
-          
-          // Sort and store
-          merged.sort((a, b) => b.date.localeCompare(a.date));
-          localStorage.setItem('floww_transactions', JSON.stringify(merged));
-          return merged;
-        });
-
-        setSyncState('ok');
-        setSyncInfo(normalized.length);
-      } else {
-        setSyncState('ok');
-        setSyncInfo(0);
-      }
+      // Overwrite local transactions entirely to represent Google Sheet as single source of truth!
+      setTransactions(normalized);
+      localStorage.setItem('floww_transactions', JSON.stringify(normalized));
+      setSyncState('ok');
+      setSyncInfo(normalized.length);
     } else {
       console.warn('Unable to sync with n8n webhook:', errorMsg);
       setSyncState('error');
       setSyncInfo(errorMsg);
     }
   };
+
+  // 2. INITIAL MOUNT LOAD: Restore state from local storage and poll
+  useEffect(() => {
+    // Restore starter base balances
+    const savedCash = localStorage.getItem('floww_bal_cash');
+    const savedBank = localStorage.getItem('floww_bal_bank') || localStorage.getItem('floww_floww_bal_bank');
+    const savedCard = localStorage.getItem('floww_bal_card');
+    
+    if (savedCash || savedBank || savedCard) {
+      setBalances({
+        cash: parseFloat(savedCash || '0'),
+        bank: parseFloat(savedBank || '0'),
+        card: parseFloat(savedCard || '0'),
+      });
+    } else {
+      setBalances({ cash: 0, bank: 0, card: 0 });
+    }
+
+    // Restore transactions if available, otherwise start with empty array
+    const savedTx = localStorage.getItem('floww_transactions');
+    if (savedTx) {
+      try {
+        setTransactions(JSON.parse(savedTx));
+      } catch (e) {
+        setTransactions([]);
+      }
+    } else {
+      setTransactions([]);
+    }
+
+    // Run first sync immediately on load
+    handleSync();
+
+    // Auto-refresh from Google Sheets every 15 seconds
+    const interval = setInterval(() => {
+      handleSync();
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // 3. SUBMIT MANUAL TRANSACTION
   const handleAddTransaction = async (newTx: Omit<Transaction, 'id'>) => {
@@ -195,16 +183,23 @@ export default function App() {
       return updated;
     });
 
-    // Send fire-and-forget background push to n8n sheets webhook
+    // Send transaction to n8n sheets webhook, then trigger sync
     try {
-      fetch(WEBHOOK_URL, {
+      setSyncState('loading');
+      await fetch(WEBHOOK_URL, {
         method: 'POST',
         mode: 'cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newTx),
       });
-    } catch (e) {
+      // Delay pull sync slightly to allow n8n write to settle in sheet
+      setTimeout(() => {
+        handleSync();
+      }, 1500);
+    } catch (e: any) {
       console.error('Push to n8n sheet failed:', e);
+      setSyncState('error');
+      setSyncInfo(e.message);
     }
   };
 
@@ -214,6 +209,16 @@ export default function App() {
     localStorage.setItem('floww_bal_cash', newBalances.cash.toString());
     localStorage.setItem('floww_bal_bank', newBalances.bank.toString());
     localStorage.setItem('floww_bal_card', newBalances.card.toString());
+  };
+
+  const handleToggleSmartCat = () => {
+    const newVal = !smartCategorization;
+    setSmartCategorization(newVal);
+    localStorage.setItem('floww_smart_cat', newVal ? 'true' : 'false');
+    // Force immediate sync with new category classification logic
+    setTimeout(() => {
+      handleSync();
+    }, 100);
   };
 
   // 5. TIMEFRAME CALCULATOR: Filter transactions based on selected period
@@ -445,16 +450,12 @@ export default function App() {
       .slice(0, 10);
   }, [filteredTransactions]);
 
-  const lastSyncedTx = useMemo(() => {
-    const sorted = [...transactions].sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`));
-    return sorted[0];
-  }, [transactions]);
-
   const handleClearHistory = () => {
-    if (confirm('Are you sure you want to purge local storage and restore defaults? This action is irreversible.')) {
+    if (confirm('Are you sure you want to purge local cache and trigger a fresh reload from Google Sheets? This action is irreversible.')) {
       localStorage.clear();
-      setTransactions(getMockTransactions());
-      setBalances({ cash: 450, bank: 9800, card: 0 });
+      setTransactions([]);
+      setBalances({ cash: 0, bank: 0, card: 0 });
+      handleSync();
     }
   };
 
@@ -474,9 +475,6 @@ export default function App() {
         <Topbar 
           period={period}
           setPeriod={setPeriod}
-          syncState={syncState}
-          syncInfo={syncInfo}
-          onRefresh={handleSync}
           onOpenAddTx={() => setIsAddTxOpen(true)}
           onOpenUpdateBalance={() => setIsUpdateBalanceOpen(true)}
           onExportCSV={() => exportToCSV(transactions, 'floww_export.csv')}
@@ -484,29 +482,6 @@ export default function App() {
 
         {/* Content Section padding */}
         <div className="content p-6 md:p-8 space-y-6 max-w-[1500px] w-full mx-auto">
-          
-          {/* Header Status Integration Line bar */}
-          <div id="sec-overview" className="flex flex-wrap items-center gap-3.5 animate-fade-up">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#131922] border border-[rgba(255,255,255,0.05)] text-xs text-[#8895aa] cursor-pointer">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e] animate-pulse"></span>
-              <span className="font-semibold text-white">n8n Engine</span>
-              <span>Online Sync</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#131922] border border-[rgba(255,255,255,0.05)] text-xs text-[#8895aa] cursor-pointer">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] shadow-[0_0_8px_#3b82f6] animate-pulse"></span>
-              <span className="font-semibold text-white">Google Sheets</span>
-              <span>{transactions.length} rows</span>
-            </div>
-            
-            {lastSyncedTx && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#131922]/40 text-[11px] text-[#8895aa] ml-auto">
-                <span className="font-bold">Last transaction synced:</span>
-                <span className="font-mono bg-[#1a2130] px-1.5 py-0.5 rounded text-[#2dd4bf] max-w-[200px] truncate">
-                  "{lastSyncedTx.desc} - {formatCurrency(lastSyncedTx.amount)} TND"
-                </span>
-              </div>
-            )}
-          </div>
 
           {/* Dynamic alerts warning section */}
           {activeAlerts.length > 0 && (
@@ -555,20 +530,7 @@ export default function App() {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Total Card */}
-              <div className="relative bg-[#131922] border border-[rgba(255,255,255,0.06)] rounded-2xl p-5 hover:bg-[#1a2130] transition-all group overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#4f8ef7] to-[#7c6af0]"></div>
-                <div className="w-8 h-8 rounded-lg bg-[rgba(79,142,247,0.12)] text-[#4f8ef7] flex items-center justify-center font-bold text-base mb-3.5">
-                  🏦
-                </div>
-                <div className="text-[10px] font-semibold text-[#8895aa] uppercase tracking-wider">Total Net Wealth</div>
-                <div className="font-heading text-xl font-extrabold text-[#f0f4ff] tracking-tight mt-1 leading-none">
-                  {formatCurrency(liveBalances.cash + liveBalances.bank + liveBalances.card)} TND
-                </div>
-                <p className="text-[10px] text-[#8895aa] mt-2.5">Sum of cash, bank, and card holdings</p>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Cash Card */}
               <div className="bg-[#131922] border border-[rgba(255,255,255,0.06)] rounded-2xl p-5 hover:bg-[#1a2130] transition-all overflow-hidden">
                 <div className="w-8 h-8 rounded-lg bg-[rgba(34,197,94,0.12)] text-[#22c55e] flex items-center justify-center font-bold text-base mb-3.5">
@@ -578,7 +540,7 @@ export default function App() {
                 <div className="font-heading text-xl font-extrabold text-[#f0f4ff] tracking-tight mt-1 leading-none">
                   {formatCurrency(liveBalances.cash)} TND
                 </div>
-                <p className="text-[10px] text-[#4a5568] mt-2.5">Base: {formatCurrency(balances.cash)} TND</p>
+                <p className="text-xs text-[#a0aec0] font-semibold mt-3 bg-[rgba(255,255,255,0.03)] inline-block px-2 py-1 rounded">Base: {formatCurrency(balances.cash)} TND</p>
               </div>
 
               {/* Bank Account */}
@@ -590,7 +552,7 @@ export default function App() {
                 <div className="font-heading text-xl font-extrabold text-[#f0f4ff] tracking-tight mt-1 leading-none">
                   {formatCurrency(liveBalances.bank)} TND
                 </div>
-                <p className="text-[10px] text-[#4a5568] mt-2.5">Base: {formatCurrency(balances.bank)} TND</p>
+                <p className="text-xs text-[#a0aec0] font-semibold mt-3 bg-[rgba(255,255,255,0.03)] inline-block px-2 py-1 rounded">Base: {formatCurrency(balances.bank)} TND</p>
               </div>
 
               {/* Credit Card Account */}
@@ -602,7 +564,7 @@ export default function App() {
                 <div className="font-heading text-xl font-extrabold text-[#f0f4ff] tracking-tight mt-1 leading-none">
                   {formatCurrency(liveBalances.card)} TND
                 </div>
-                <p className="text-[10px] text-[#4a5568] mt-2.5">Base: {formatCurrency(balances.card)} TND</p>
+                <p className="text-xs text-[#a0aec0] font-semibold mt-3 bg-[rgba(255,255,255,0.03)] inline-block px-2 py-1 rounded">Base: {formatCurrency(balances.card)} TND</p>
               </div>
             </div>
           </div>
@@ -836,8 +798,31 @@ export default function App() {
           </div>
 
           {/* Developer / debug settings action drawer */}
-          <div className="pt-6 border-t border-[rgba(255,255,255,0.06)] flex justify-between items-center text-[#4a5568] text-[11px] font-medium">
-            <span>Powered by Floww Smart n8n Google Sheets Integration</span>
+          <div className="pt-6 border-t border-[rgba(255,255,255,0.06)] flex flex-wrap gap-4 justify-between items-center text-[#4a5568] text-[11px] font-medium">
+            <div className="flex flex-wrap items-center gap-3 md:gap-4">
+              <span className="text-[#8895aa] font-semibold">AI Finance Tracker</span>
+              <div className="h-4 w-[1px] bg-[rgba(255,255,255,0.1)] hidden sm:block"></div>
+              {/* Smart Categorization Settings Toggle */}
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input 
+                  type="checkbox"
+                  checked={smartCategorization}
+                  onChange={smartCategorization ? () => handleToggleSmartCat() : handleToggleSmartCat}
+                  className="rounded bg-[#1a2130] border-[rgba(255,255,255,0.1)] text-[#4f8ef7] focus:ring-0 cursor-pointer h-3.5 w-3.5"
+                />
+                <span className={smartCategorization ? 'text-[#4f8ef7] font-semibold transition-all' : 'text-[#8895aa] transition-all'}>
+                  Smart Categorization {smartCategorization ? 'Enabled' : 'Disabled'}
+                </span>
+              </label>
+              <div className="h-4 w-[1px] bg-[rgba(255,255,255,0.1)] hidden sm:block"></div>
+              <div className="flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${syncState === 'loading' ? 'bg-[#3b82f6] animate-pulse' : syncState === 'error' ? 'bg-red-500' : 'bg-[#22c55e]'} shadow-sm`}></span>
+                <span className="text-[10px] text-[#8895aa]">
+                  {syncState === 'loading' ? 'Syncing n8n...' : syncState === 'error' ? `Offline: ${syncInfo}` : `Connected (${syncInfo} Sheet rows)`}
+                </span>
+              </div>
+            </div>
+            
             <button 
               onClick={handleClearHistory}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/10 hover:border-red-500/20 text-red-500/80 hover:text-red-500 bg-red-500/5 transition-all cursor-pointer font-bold"
@@ -866,13 +851,6 @@ export default function App() {
 
       {/* Persistent Floating Quick Action Button area */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-2.5 z-40">
-        <button
-          onClick={handleSync}
-          className="w-11 h-11 rounded-xl bg-[#131922] border border-[rgba(255,255,255,0.06)] flex items-center justify-center text-[#8895aa] hover:text-[#4f8ef7] hover:bg-[#1a2130] transition-all duration-200 shadow-lg hover:scale-105 cursor-pointer"
-          title="Refresh connection sync"
-        >
-          <RefreshCw size={15} className={`flex-shrink-0 ${syncState === 'loading' ? 'animate-spin' : ''}`} />
-        </button>
         <button
           onClick={() => setIsAddTxOpen(true)}
           className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4f8ef7] to-[#7c6af0] text-white flex items-center justify-center shadow-[0_4px_16px_rgba(79,142,247,0.4)] hover:shadow-[0_4px_24px_rgba(79,142,247,0.6)] hover:scale-110 transition-all duration-200 cursor-pointer"

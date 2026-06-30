@@ -151,25 +151,6 @@ export default function Sidebar({
         </button>
       </nav>
 
-      {/* Integration Status Footer */}
-      {!collapsed && (
-        <div className="p-3 border-t border-[rgba(255,255,255,0.06)] space-y-2">
-          <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_6px_#22c55e] animate-pulse"></span>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-[#f0f4ff] font-medium leading-none flex items-center gap-1">Telegram <Send size={8} /></span>
-              <span className="text-[8px] text-[#8895aa]">Bot Active</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4f8ef7] shadow-[0_0_6px_#4f8ef7] animate-pulse"></span>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-[#f0f4ff] font-medium leading-none flex items-center gap-1">n8n Engine <Sliders size={8} /></span>
-              <span className="text-[8px] text-[#22c55e] font-semibold">Workflow Running</span>
-            </div>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }

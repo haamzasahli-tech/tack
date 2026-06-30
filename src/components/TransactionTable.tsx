@@ -56,7 +56,7 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
         t =>
           (t.desc || '').toLowerCase().includes(q) ||
           (t.notes || '').toLowerCase().includes(q) ||
-          (CATS[t.cat]?.label || '').toLowerCase().includes(q)
+          (CATS[t.cat]?.label || t.cat || '').toLowerCase().includes(q)
       );
     }
 
@@ -320,9 +320,8 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
           <tbody className="divide-y divide-[rgba(255,255,255,0.025)]">
             {paginatedTransactions.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center p-12 text-[#4a5568] text-sm">
-                  <Sparkles size={18} className="mx-auto mb-2 opacity-50 text-[#8895aa]" />
-                  No matching transaction records found.
+                <td colSpan={6} className="text-center p-12 text-[#8895aa] text-sm">
+                  No transactions found.
                 </td>
               </tr>
             ) : (

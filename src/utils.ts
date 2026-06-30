@@ -10,32 +10,31 @@ export function formatCurrency(amount: number): string {
 }
 
 // Auto-detect a suitable category key based on title, descriptions, or raw values
-export function detectCategory(description: string, notes: string, categoryValue?: string): string {
-  const normCat = (categoryValue || '').toString().toLowerCase().trim();
+export function detectCategory(description: string, notes: string, categoryValue?: string, enableSmartCategorization = false): string {
+  const normCat = (categoryValue || '').toString().trim();
   
   if (normCat) {
-    if (CATS[normCat]) {
-      return normCat;
+    const normLower = normCat.toLowerCase();
+    if (CATS[normLower]) {
+      return normLower;
     }
     // Partial check in labels
     for (const [key, value] of Object.entries(CATS)) {
-      if (normCat.includes(key) || normCat.includes(value.label.toLowerCase())) {
+      if (normLower === value.label.toLowerCase() || normLower.includes(key)) {
         return key;
       }
     }
-    // Keyword map check on raw category string
-    for (const [kw, catKey] of Object.entries(KW)) {
-      if (normCat.includes(kw)) {
-        return catKey;
-      }
-    }
+    // Return raw category exactly as received if it's not empty and not matching predefined
+    return normCat;
   }
 
-  // Fallback to searching the description and notes
-  const textToSearch = `${description} ${notes}`.toLowerCase();
-  for (const [kw, catKey] of Object.entries(KW)) {
-    if (textToSearch.includes(kw)) {
-      return catKey;
+  // Fallback to keyword guessing only if Smart Categorization is enabled
+  if (enableSmartCategorization) {
+    const textToSearch = `${description} ${notes}`.toLowerCase();
+    for (const [kw, catKey] of Object.entries(KW)) {
+      if (textToSearch.includes(kw)) {
+        return catKey;
+      }
     }
   }
 
@@ -43,7 +42,7 @@ export function detectCategory(description: string, notes: string, categoryValue
 }
 
 // Normalize raw inputs (from API/webhooks or modal fields) to secure TypeScript objects
-export function normalizeTransaction(raw: any, fallbackId?: string): Transaction {
+export function normalizeTransaction(raw: any, fallbackId?: string, enableSmartCategorization = false): Transaction {
   const src = (raw && typeof raw.json === 'object') ? raw.json : raw;
   const r: Record<string, any> = {};
   
@@ -68,7 +67,7 @@ export function normalizeTransaction(raw: any, fallbackId?: string): Transaction
   }
 
   // Resolve category
-  const cat = detectCategory(desc, notes, r.category || r.cat || r.categorie);
+  const cat = detectCategory(desc, notes, r.category || r.cat || r.categorie, enableSmartCategorization);
 
   // Override type based on resolved category for maximum intelligence
   let finalType = type;
@@ -101,7 +100,7 @@ export function normalizeTransaction(raw: any, fallbackId?: string): Transaction
   return {
     id: src.id || fallbackId || `tx-${Math.random().toString(36).substr(2, 9)}`,
     amount,
-    desc: desc || CATS[cat]?.label || 'Unlabeled Transaction',
+    desc: desc || CATS[cat]?.label || cat || 'Unlabeled Transaction',
     notes,
     pm,
     account,
