@@ -1,0 +1,6 @@
+{
+  "name": "Floww Finance Dashboard",
+  "description": "An elegant, interactive personal finance intelligence dashboard with real-time analytics, category breakdown, account sync, and transactional search.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
