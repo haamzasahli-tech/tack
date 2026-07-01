@@ -175,7 +175,7 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
         </div>
 
         {/* Type dropdown */}
-        <div className="flex items-center gap-1.5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] rounded-lg px-2.5 py-1.5">
+        <div className="flex items-center gap-1.5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] rounded-lg px-2.5 py-1.5 bg-[#131922]">
           <Layers size={11} className="text-[#8895aa]" />
           <select
             value={filterType}
@@ -183,17 +183,17 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
               setFilterType(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-transparent border-none text-[#f0f4ff] text-xs outline-none cursor-pointer font-medium"
+            className="bg-transparent border-none text-[#f0f4ff] text-xs outline-none cursor-pointer font-medium bg-[#131922]"
           >
-            <option value="">All Types</option>
-            <option value="expense">Expenses</option>
-            <option value="income">Income</option>
-            <option value="transfer">Transfers</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="">All Types</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="expense">Expenses</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="income">Income</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="transfer">Transfers</option>
           </select>
         </div>
 
         {/* Category dropdown */}
-        <div className="flex items-center gap-1.5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] rounded-lg px-2.5 py-1.5">
+        <div className="flex items-center gap-1.5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] rounded-lg px-2.5 py-1.5 bg-[#131922]">
           <Tag size={11} className="text-[#8895aa]" />
           <select
             value={filterCat}
@@ -201,13 +201,13 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
               setFilterCat(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-transparent border-none text-[#f0f4ff] text-xs outline-none cursor-pointer font-medium"
+            className="bg-transparent border-none text-[#f0f4ff] text-xs outline-none cursor-pointer font-medium bg-[#131922]"
           >
-            <option value="">All Categories</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="">All Categories</option>
             {uniqueCats.map((catKey) => {
               const cat = getCategoryDetails(catKey);
               return (
-                <option key={catKey} value={catKey}>
+                <option className="bg-[#131922] text-[#f0f4ff]" key={catKey} value={catKey}>
                   {cat.icon} {cat.label}
                 </option>
               );
@@ -216,7 +216,7 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
         </div>
 
         {/* Method dropdown */}
-        <div className="flex items-center gap-1.5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] rounded-lg px-2.5 py-1.5">
+        <div className="flex items-center gap-1.5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] rounded-lg px-2.5 py-1.5 bg-[#131922]">
           <Wallet size={11} className="text-[#8895aa]" />
           <select
             value={filterPM}
@@ -224,13 +224,13 @@ export default function TransactionTable({ transactions, onOpenAddTx }: Transact
               setFilterPM(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-transparent border-none text-[#f0f4ff] text-xs outline-none cursor-pointer font-medium"
+            className="bg-transparent border-none text-[#f0f4ff] text-xs outline-none cursor-pointer font-medium bg-[#131922]"
           >
-            <option value="">All Methods</option>
-            <option value="Cash">Cash</option>
-            <option value="Card">Card</option>
-            <option value="Bank Transfer">Bank Transfer</option>
-            <option value="Mobile Payment">Mobile Payment</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="">All Methods</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="Cash">Cash</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="Card">Card</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="Bank Transfer">Bank Transfer</option>
+            <option className="bg-[#131922] text-[#f0f4ff]" value="Mobile Payment">Mobile Payment</option>
           </select>
         </div>
 

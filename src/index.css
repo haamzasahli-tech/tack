@@ -20,3 +20,9 @@
 .animate-fade-up {
   animation: fadeUp 0.45s ease both;
 }
+
+/* Ensure dropdown options have solid dark background on Windows, macOS, Android, and iOS */
+select option {
+  background-color: #131922 !important;
+  color: #f0f4ff !important;
+}

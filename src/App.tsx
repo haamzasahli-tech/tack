@@ -42,6 +42,7 @@ export default function App() {
   // Modals visibility toggles
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
   const [isUpdateBalanceOpen, setIsUpdateBalanceOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Category configuration toggle
   const [catSortHighest, setCatSortHighest] = useState(true);
@@ -468,6 +469,8 @@ export default function App() {
         onOpenUpdateBalance={() => setIsUpdateBalanceOpen(true)}
         activeSection={activeSection}
         setActiveSection={setActiveSection}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       {/* Main Content Pane */}
@@ -478,6 +481,7 @@ export default function App() {
           onOpenAddTx={() => setIsAddTxOpen(true)}
           onOpenUpdateBalance={() => setIsUpdateBalanceOpen(true)}
           onExportCSV={() => exportToCSV(transactions, 'floww_export.csv')}
+          onOpenSidebar={() => setIsSidebarOpen(true)}
         />
 
         {/* Content Section padding */}

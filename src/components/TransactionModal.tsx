@@ -198,7 +198,7 @@ export default function TransactionModal({
                 {getFilteredCategories().map((catKey) => {
                   const cat = getCategoryDetails(catKey);
                   return (
-                    <option key={catKey} value={catKey}>
+                    <option className="bg-[#1a2130] text-[#f0f4ff]" key={catKey} value={catKey}>
                       {cat.icon} {cat.label}
                     </option>
                   );
@@ -216,10 +216,10 @@ export default function TransactionModal({
                 onChange={(e) => setPm(e.target.value)}
                 className="w-full bg-[#1a2130] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-xs text-[#f0f4ff] outline-none focus:border-[#4f8ef7] transition-all"
               >
-                <option value="Cash">💵 Cash</option>
-                <option value="Card">💳 Card</option>
-                <option value="Bank Transfer">🏦 Bank Transfer</option>
-                <option value="Mobile Payment">📱 Mobile Payment</option>
+                <option className="bg-[#1a2130] text-[#f0f4ff]" value="Cash">💵 Cash</option>
+                <option className="bg-[#1a2130] text-[#f0f4ff]" value="Card">💳 Card</option>
+                <option className="bg-[#1a2130] text-[#f0f4ff]" value="Bank Transfer">🏦 Bank Transfer</option>
+                <option className="bg-[#1a2130] text-[#f0f4ff]" value="Mobile Payment">📱 Mobile Payment</option>
               </select>
             </div>
           </div>
@@ -236,9 +236,9 @@ export default function TransactionModal({
                   onChange={(e) => setFromAccount(e.target.value)}
                   className="w-full bg-[#1a2130] border border-[rgba(255,255,255,0.06)] rounded-lg px-2.5 py-1.5 text-xs text-[#f0f4ff] outline-none focus:border-[#4f8ef7] transition-all"
                 >
-                  <option value="Cash">💵 Cash</option>
-                  <option value="Bank">🏦 Bank</option>
-                  <option value="Card">💳 Card</option>
+                  <option className="bg-[#1a2130] text-[#f0f4ff]" value="Cash">💵 Cash</option>
+                  <option className="bg-[#1a2130] text-[#f0f4ff]" value="Bank">🏦 Bank</option>
+                  <option className="bg-[#1a2130] text-[#f0f4ff]" value="Card">💳 Card</option>
                 </select>
               </div>
 
@@ -251,9 +251,9 @@ export default function TransactionModal({
                   onChange={(e) => setToAccount(e.target.value)}
                   className="w-full bg-[#1a2130] border border-[rgba(255,255,255,0.06)] rounded-lg px-2.5 py-1.5 text-xs text-[#f0f4ff] outline-none focus:border-[#4f8ef7] transition-all"
                 >
-                  <option value="Cash">💵 Cash</option>
-                  <option value="Bank">🏦 Bank</option>
-                  <option value="Card">💳 Card</option>
+                  <option className="bg-[#1a2130] text-[#f0f4ff]" value="Cash">💵 Cash</option>
+                  <option className="bg-[#1a2130] text-[#f0f4ff]" value="Bank">🏦 Bank</option>
+                  <option className="bg-[#1a2130] text-[#f0f4ff]" value="Card">💳 Card</option>
                 </select>
               </div>
             </div>
